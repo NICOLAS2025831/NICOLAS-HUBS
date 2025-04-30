@@ -1,0 +1,173 @@
+-- NICOLAS HUB - Testes autorizados em Brookhaven
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+local UIS = game:GetService("UserInputService")
+
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "NICOLAS_HUB"
+gui.ResetOnSpawn = false
+
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0, 280, 0, 500)
+main.Position = UDim2.new(0, 20, 0.2, 0)
+main.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 12)
+local layout = Instance.new("UIListLayout", main)
+layout.Padding = UDim.new(0, 6)
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layout.VerticalAlignment = Enum.VerticalAlignment.Top
+
+-- Nome do HUB
+local title = Instance.new("TextLabel", main)
+title.Size = UDim2.new(1, 0, 0, 40)
+title.BackgroundTransparency = 1
+title.Text = "NICOLAS HUB"
+title.TextColor3 = Color3.new(1,1,1)
+title.Font = Enum.Font.GothamBlack
+title.TextSize = 22
+
+local function criarBotao(texto, callback)
+	local btn = Instance.new("TextButton", main)
+	btn.Size = UDim2.new(0, 240, 0, 35)
+	btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	btn.TextColor3 = Color3.new(1,1,1)
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 16
+	btn.Text = texto
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+	btn.MouseButton1Click:Connect(callback)
+	return btn
+end
+
+-- 1. Matar jogadores com carro (força 10000)
+local carroAtivo = false
+local carroBtn = criarBotao("Matar com Carro: OFF", function()
+	carroAtivo = not carroAtivo
+	carroBtn.Text = "Matar com Carro: " .. (carroAtivo and "ON" or "OFF")
+	if carroAtivo then
+		for _, car in pairs(workspace:GetDescendants()) do
+			if car:IsA("VehicleSeat") then
+				for _, p in pairs(Players:GetPlayers()) do
+					if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+						local hrp = p.Character.HumanoidRootPart
+						hrp:ApplyImpulse((car.CFrame.LookVector * 10000))
+					end
+				end
+			end
+		end
+	end
+end)
+
+-- 2. Matar com sofá
+local sofaAtivo = false
+local sofaBtn = criarBotao("Sofá Mortal: OFF", function()
+	sofaAtivo = not sofaAtivo
+	sofaBtn.Text = "Sofá Mortal: " .. (sofaAtivo and "ON" or "OFF")
+	if sofaAtivo then
+		for _, obj in pairs(workspace:GetDescendants()) do
+			if obj:IsA("Model") and obj.Name:lower():find("sofa") then
+				for _, p in pairs(Players:GetPlayers()) do
+					if p ~= player and p.Character and p.Character:FindFirstChild("Humanoid") then
+						p.Character.Humanoid.Health = 0
+					end
+				end
+			end
+		end
+	end
+end)
+
+-- 3. Voar com níveis 1 a 1000
+local fly = false
+local flyForce = 100
+local flyConn
+local flyBtn = criarBotao("Fly: Desligado", function()
+	fly = not fly
+	flyBtn.Text = "Fly: " .. (fly and "Ligado" or "Desligado")
+	local hrp = player.Character:WaitForChild("HumanoidRootPart")
+	if fly then
+		local bv = Instance.new("BodyVelocity", hrp)
+		bv.MaxForce = Vector3.new(1,1,1) * 1e6
+		bv.Name = "FlyForce"
+		flyConn = RunService.RenderStepped:Connect(function()
+			local dir = Vector3.zero
+			local cam = workspace.CurrentCamera
+			if UIS:IsKeyDown(Enum.KeyCode.W) then dir += cam.CFrame.LookVector end
+			if UIS:IsKeyDown(Enum.KeyCode.S) then dir -= cam.CFrame.LookVector end
+			if UIS:IsKeyDown(Enum.KeyCode.A) then dir -= cam.CFrame.RightVector end
+			if UIS:IsKeyDown(Enum.KeyCode.D) then dir += cam.CFrame.RightVector end
+			if UIS:IsKeyDown(Enum.KeyCode.Space) then dir += Vector3.new(0,1,0) end
+			if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then dir -= Vector3.new(0,1,0) end
+			bv.Velocity = dir.Unit * flyForce
+		end)
+	else
+		if flyConn then flyConn:Disconnect() end
+		local old = hrp:FindFirstChild("FlyForce")
+		if old then old:Destroy() end
+	end
+end)
+
+criarBotao("Potência Fly +100", function()
+	if flyForce < 1000 then flyForce += 100 end
+end)
+
+criarBotao("Potência Fly -100", function()
+	if flyForce > 100 then flyForce -= 100 end
+end)
+
+-- 4. Velocidade ajustável
+local speed = 16
+local speedBtn = criarBotao("Velocidade: 16", function() end)
+criarBotao("Velocidade +100", function()
+	speed = math.min(speed + 100, 1000)
+	speedBtn.Text = "Velocidade: " .. speed
+	if player.Character:FindFirstChildWhichIsA("Humanoid") then
+		player.Character:FindFirstChildWhichIsA("Humanoid").WalkSpeed = speed
+	end
+end)
+criarBotao("Velocidade -100", function()
+	speed = math.max(speed - 100, 16)
+	speedBtn.Text = "Velocidade: " .. speed
+	if player.Character:FindFirstChildWhichIsA("Humanoid") then
+		player.Character:FindFirstChildWhichIsA("Humanoid").WalkSpeed = speed
+	end
+end)
+
+-- 5. Atravessar paredes
+local noclip = false
+local noclipConn
+local noclipBtn = criarBotao("Noclip: OFF", function()
+	noclip = not noclip
+	noclipBtn.Text = "Noclip: " .. (noclip and "ON" or "OFF")
+	if noclip then
+		noclipConn = RunService.Stepped:Connect(function()
+			if player.Character then
+				for _, p in pairs(player.Character:GetDescendants()) do
+					if p:IsA("BasePart") then
+						p.CanCollide = false
+					end
+				end
+			end
+		end)
+	else
+		if noclipConn then noclipConn:Disconnect() end
+	end
+end)
+
+-- 6. Bring Parts (levita carros, portas, janelas)
+local bringAtivo = false
+local bringBtn = criarBotao("Bring Parts: OFF", function()
+	bringAtivo = not bringAtivo
+	bringBtn.Text = "Bring Parts: " .. (bringAtivo and "ON" or "OFF")
+	if bringAtivo then
+		for _, part in pairs(workspace:GetDescendants()) do
+			if part:IsA("BasePart") and (part.Name:lower():find("door") or part.Name:lower():find("car") or part.Name:lower():find("window")) then
+				local bp = Instance.new("BodyPosition", part)
+				bp.MaxForce = Vector3.new(1,1,1) * 1e6
+				bp.Position = part.Position + Vector3.new(0, 30, 0)
+				game.Debris:AddItem(bp, 2)
+			end
+		end
+	end
+end)
