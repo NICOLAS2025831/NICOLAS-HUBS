@@ -1,0 +1,52 @@
+-- Interface simples
+local ScreenGui = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+local Toggle = Instance.new("TextButton")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Configurações da interface
+ScreenGui.Name = "InfiniteJumpUI"
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+Frame.Name = "MainFrame"
+Frame.Parent = ScreenGui
+Frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+Frame.Position = UDim2.new(0.4, 0, 0.3, 0)
+Frame.Size = UDim2.new(0, 200, 0, 100)
+Frame.BorderSizePixel = 0
+
+Toggle.Name = "ToggleButton"
+Toggle.Parent = Frame
+Toggle.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Toggle.Position = UDim2.new(0.1, 0, 0.25, 0)
+Toggle.Size = UDim2.new(0, 160, 0, 50)
+Toggle.Font = Enum.Font.Gotham
+Toggle.Text = "Infinite Jump: OFF"
+Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+Toggle.TextScaled = true
+
+-- Variável de ativação
+local infiniteJumpEnabled = false
+
+-- Team Check Function
+local function isAllowedTeam()
+    local team = LocalPlayer.Team
+    if team and team.Name == "AllowedTeam" then -- Substitua "AllowedTeam" pelo nome da equipe permitida
+        return true
+    end
+    return false
+end
+
+-- Infinite Jump Logic
+Toggle.MouseButton1Click:Connect(function()
+    infiniteJumpEnabled = not infiniteJumpEnabled
+    Toggle.Text = "Infinite Jump: " .. (infiniteJumpEnabled and "ON" or "OFF")
+end)
+
+-- Loop de Jump
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if infiniteJumpEnabled and isAllowedTeam() then
+        LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
