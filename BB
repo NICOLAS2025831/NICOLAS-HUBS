@@ -1,0 +1,28 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UIS = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+local mouse = player:GetMouse()
+local TelekinesisEvent = ReplicatedStorage:WaitForChild("TelekinesisEvent")
+
+local telekinesisEnabled = false
+
+-- Interface botão (assumindo que já está criada no StarterGui)
+local screenGui = script.Parent:WaitForChild("TelekinesisGui")
+local toggleButton = screenGui:WaitForChild("ToggleButton")
+
+toggleButton.MouseButton1Click:Connect(function()
+    telekinesisEnabled = not telekinesisEnabled
+    toggleButton.Text = telekinesisEnabled and "Telekinesis: ON" or "Telekinesis: OFF"
+end)
+
+UIS.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if telekinesisEnabled and input.UserInputType == Enum.UserInputType.MouseButton1 then
+        local target = mouse.Target
+        if target and target:IsA("BasePart") then
+            TelekinesisEvent:FireServer(target)
+        end
+    end
+end)
